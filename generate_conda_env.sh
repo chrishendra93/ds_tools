@@ -1,2 +1,2 @@
-conda env export | grep -v "^prefix: " > environment.yml
+conda env export --no-builds | grep -v "^prefix: " > environment.yml
 
