@@ -1,6 +1,6 @@
-import pandas as pd
 import numpy as np
 from .cv_utils import run_kfold_cv
+from sklearn.model_selection import StratifiedKFold
 from functools import reduce
 
 
