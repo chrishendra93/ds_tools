@@ -20,7 +20,7 @@ from sklearn.metrics._scorer import (_cached_call, _check_multimetric_scoring,
                                      _BaseScorer, _ThresholdScorer, _PredictScorer, _ProbaScorer)
 
 
-class _ProbaPredictor():
+class _ProbaRetriever():
     def _score(self, method_caller, clf, X, y, sample_weight=None):
         """Evaluate predicted probabilities for X relative to y_true.
         Parameters
@@ -45,14 +45,19 @@ class _ProbaPredictor():
         """
 
         y_type = type_of_target(y)
-        y_pred = method_caller(clf, "predict_proba", X)
+        if is_classifier(clf):
+            method_name = 'predict_proba'
+        else:
+            method_name = 'predict'
+
+        y_pred = method_caller(clf, method_name, X)
         if y_type == "binary":
             if y_pred.shape[1] == 1:  # not multiclass
                 raise ValueError('got predict_proba of shape {},'
                                  ' but need classifier with two'
                                  ' classes'.format(
                                      y_pred.shape))
-        return y_pred
+        return y, y_pred
 
     def _factory_args(self):
         return ", needs_proba=True"
@@ -80,7 +85,10 @@ class _MultimetricScorer:
         cached_call = partial(_cached_call, cache)
 
         if self.return_proba:
-            scores["proba"] = _ProbaPredictor()._score(cached_call, estimator, *args, **kwargs)
+            y_true, y_pred = _ProbaRetriever()._score(cached_call, estimator, *args, **kwargs)
+            scores["y_pred"] = y_pred
+            scores["y_true"] = y_true
+
         for name, scorer in self._scorers.items():
             if isinstance(scorer, _BaseScorer):
                 score = scorer._score(cached_call, estimator,
@@ -304,11 +312,15 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
         if return_train_score:
             key = 'train_%s' % name
             ret[key] = np.array(train_scores[name])
+
     if return_train_proba:
-        ret['train_proba'] = train_scores['proba']
+        ret['train_y_pred'] = train_scores['y_pred']
+        ret['train_y_train'] = train_scores['y_true']
     
     if return_test_proba:
-        ret['test_proba'] = test_scores['proba']
+        ret['test_y_pred'] = test_scores['y_pred']
+        ret['test_y_true'] = test_scores['y_true']
+
     return ret
 
 
@@ -490,7 +502,7 @@ def _score(estimator, X_test, y_test, scorer, return_proba=False):
                  "instead. (scorer=%s)")
     if isinstance(scores, dict):
         for name, score in scores.items():
-            if name == "proba":
+            if name in ("y_true", "y_pred"):
                 continue
             if hasattr(score, 'item'):
                 with suppress(ValueError):

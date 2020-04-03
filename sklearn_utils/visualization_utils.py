@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.model_selection import StratifiedKFold
+from sklearn.metrics import roc_curve, precision_recall_curve, auc
 from .data_exploration_utils import generate_correlation_df, generate_cumulative_top_features_scores
 from .data_exploration_utils import generate_features_importance
 ''' this module is intended for data exploration with jupyter notebook '''
@@ -72,3 +73,35 @@ def plot_correlation_matrix(df, features, label=None, n_fold=10, imbalanced=Fals
     sns.heatmap(data=corr_df)
     plt.show()
     plt.gcf().clear()
+
+
+def plot_roc_curve(y_true, y_pred, label, ax):
+    fpr, tpr, _ = roc_curve(y_true, y_pred)
+    roc_auc = auc(fpr, tpr)
+    sns.lineplot(fpr, tpr, lw=1, ax=ax, alpha=0.3, label="{} - AUC: %0.2f".format(label) % (roc_auc))
+
+
+def plot_pr_curve(y_true, y_pred, label, ax):
+    precision, recall, _ = precision_recall_curve(y_true, y_pred, pos_label=1)
+    pr_auc = auc(recall, precision)
+    sns.lineplot(recall, precision, lw=1, alpha=0.3, ax=ax, label="{} - AUC: %0.2f".format(label) % (pr_auc))
+
+
+def customise_roc_pr_plots(axes, label_size=30, font_size=25, linewidth=10):
+    # Customizing plots
+    for ax in axes:
+        ax.xaxis.label.set_size(label_size)
+        ax.yaxis.label.set_size(label_size)
+
+        for axis in [ax.xaxis, ax.yaxis]:
+            for tick in axis.get_major_ticks():
+                tick.label.set_fontsize(font_size)
+
+        plt.setp(ax.get_legend().get_texts(), fontsize='{}'.format(font_size))
+        plt.setp(ax.lines, linewidth=linewidth)
+
+    axes[0].set_xlabel('False Positive Rate')
+    axes[0].set_ylabel('True Positive Rate')
+
+    axes[1].set_xlabel('Recall')
+    axes[1].set_ylabel('Precision')

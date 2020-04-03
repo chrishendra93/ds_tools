@@ -3,6 +3,7 @@ import warnings
 from sklearn.model_selection import GridSearchCV
 from sklearn import metrics
 from sklearn.model_selection import StratifiedKFold, PredefinedSplit
+from sklearn.pipeline import Pipeline as sk_pipeline
 from imblearn.pipeline import Pipeline
 from .sklearn_fork import cross_validate
 
@@ -90,7 +91,7 @@ def run_kfold_cv(model, X, y, cv_fold=10, metrics_list=['accuracy', 'f1'],
                  return_cv_results=False, print_result=True):
     ''' when specified, sampler must be able to work with imblearn.pipeline Pipeline class'''
 
-    model_name = type(model).__name__
+    model_name = type(model[-1]).__name__ if isinstance(model, sk_pipeline) else type(model).__name__
     prefixes = ["score"] if isinstance(metrics_list, str) else metrics_list
 
     if return_train_proba and not return_train_score:
