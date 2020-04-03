@@ -1,5 +1,5 @@
 import numpy as np
-from sklearn import warnings
+import warnings
 from sklearn.model_selection import GridSearchCV
 from sklearn import metrics
 from sklearn.model_selection import StratifiedKFold, PredefinedSplit, cross_validate
