@@ -2,8 +2,9 @@ import numpy as np
 import warnings
 from sklearn.model_selection import GridSearchCV
 from sklearn import metrics
-from sklearn.model_selection import StratifiedKFold, PredefinedSplit, cross_validate
+from sklearn.model_selection import StratifiedKFold, PredefinedSplit
 from imblearn.pipeline import Pipeline
+from .sklearn_fork import cross_validate
 
 
 def generate_gridsearch_cv(model, x_train, y_train, scores,
@@ -85,12 +86,16 @@ def pretty_print_kfold_result(cv_result, prefixes, model_name, return_train_scor
 
 def run_kfold_cv(model, X, y, cv_fold=10, metrics_list=['accuracy', 'f1'],
                  n_jobs=None, fit_params=None, sampler=None, task_type='classification',
-                 return_train_score=True, return_output=False, print_result=True):
+                 return_train_score=False, return_train_proba=False, return_test_proba=False,
+                 return_cv_results=False, print_result=True):
     ''' when specified, sampler must be able to work with imblearn.pipeline Pipeline class'''
 
     model_name = type(model).__name__
     prefixes = ["score"] if isinstance(metrics_list, str) else metrics_list
 
+    if return_train_proba and not return_train_score:
+        err_msg = "Unable to return train probability of return_train_score is set as {}".format(return_train_score)
+        raise ValueError(err_msg)
     if fit_params:
         model = model.set_params(**fit_params)
 
@@ -101,10 +106,11 @@ def run_kfold_cv(model, X, y, cv_fold=10, metrics_list=['accuracy', 'f1'],
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore")
         cv_result = cross_validate(model, X, y, scoring=metrics_list, n_jobs=n_jobs, cv=cv_fold,
-                                   return_train_score=return_train_score)
+                                   return_train_score=return_train_score, return_train_proba=return_train_proba,
+                                   return_test_proba=return_test_proba)
 
     if print_result:
         pretty_print_kfold_result(cv_result, prefixes, model_name, return_train_score)
 
-    if return_output:
+    if return_cv_results:
         return cv_result
