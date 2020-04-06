@@ -75,14 +75,14 @@ def plot_correlation_matrix(df, features, label=None, n_fold=10, imbalanced=Fals
     plt.gcf().clear()
 
 
-def plot_roc_curve(y_true, y_pred, label, ax):
-    fpr, tpr, _ = roc_curve(y_true, y_pred)
+def plot_roc_curve(y_true, y_pred, label, ax, pos_label=1):
+    fpr, tpr, _ = roc_curve(y_true, y_pred, pos_label=pos_label)
     roc_auc = auc(fpr, tpr)
     sns.lineplot(fpr, tpr, lw=1, ax=ax, alpha=0.3, label="{} - AUC: %0.2f".format(label) % (roc_auc))
 
 
-def plot_pr_curve(y_true, y_pred, label, ax):
-    precision, recall, _ = precision_recall_curve(y_true, y_pred, pos_label=1)
+def plot_pr_curve(y_true, y_pred, label, ax, pos_label=1):
+    precision, recall, _ = precision_recall_curve(y_true, y_pred, pos_label=pos_label)
     pr_auc = auc(recall, precision)
     sns.lineplot(recall, precision, lw=1, alpha=0.3, ax=ax, label="{} - AUC: %0.2f".format(label) % (pr_auc))
 
